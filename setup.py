@@ -8,6 +8,5 @@ setup(
     author_email='wester.de.weerdt@dutchmail.com',
     url='https://github.com/Atlas-Scientific/R-pi-database-',
     description='Python wrapper for Atlas Scientific USB sensors',
-    license='MIT',
-    requires=['pylibftdi']
+    license='MIT'
 )

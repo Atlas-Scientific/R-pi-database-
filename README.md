@@ -10,6 +10,10 @@
     
         sudo pip install pylibftdi
 
+- Install dependencies
+    
+        sudo apt-get install sqlite
+
 - Create SYMLINK of the FTDI adaptors.
     
     The following will allow ordinary users (e.g. ‘pi’ on the RPi) to access to the FTDI device without needing root permissions:
@@ -64,4 +68,16 @@
     We need this to work with our sensors.
 
     In the result above, serial number is `DA00TN73`.
+    
+## Install library
+    
+    cd ~
+    git clone https://github.com/Atlas-Scientific/R-pi-database-.git
+    cd R-pi-database-
+    sudo python setup.py install
+    
+    
+    
+## Test library
+    
     

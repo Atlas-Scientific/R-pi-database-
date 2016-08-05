@@ -1,100 +1,141 @@
-import string
-import pylibftdi
-from pylibftdi.device import Device
-from pylibftdi.driver import FtdiError
-import time
+import random
+import sqlite3 as lite
 
 
-class AtlasDevice(Device):
+def execute_query(db_name, query):
+    """
+    Executes given query.
+    :param db_name: DB file name(full path is )
+    """
+    # print "Executing query: ", query
+    try:
+        conn = lite.connect(db_name)
+        curs = conn.cursor()
+        curs.execute(query)
+        conn.commit()
+        conn.close()
+        return True
 
-    def read_line(self):
-        """
-        Read the response from the Atlas Sensor
-        :return:
-        """
-        line_buffer = []
-        try:
-            start_time = time.time()
-            while True:
+    except lite.Error as e:
+        print("Error %s:" % e.args[0])
+        return False
 
-                # read bytes until Carriage Return is received.
-                next_char = self.read(1)    # read one byte
-                if next_char == "\r":        # response of Atlas sensor is always ended with CR.
-                    break
-                line_buffer.append(next_char)
 
-                if time.time() - start_time > 1.0:  # timeout
-                    line_buffer = ['']
-                    break
-            return ''.join(line_buffer)
+def request_query(db_name, query):
+    """
+    Send request and return received result.
+    """
+    # print "Requesting query:", query
+    try:
+        conn = lite.connect(db_name)
+        curs = conn.cursor()
+        curs.execute(query)
+        result = curs.fetchall()
+        conn.close()
+        if result is not None:
+            return [list(re) for re in result]
+        else:
+            return None
 
-        except FtdiError:
-            print "Failed to read from the sensor."
-            return ''
+    except lite.Error as e:
+        print("Error %s:" % e.args[0])
+        return False
 
-    def send_cmd(self, cmd):
-        """
-        Send command to the Atlas Sensor.
-        Before sending, add Carriage Return at the end of the command.
-        :param cmd:
-        :return:
-        """
-        buf = cmd + "\r"         # add carriage return
-        try:
-            self.write(buf)
-            return True
-        except FtdiError:
-            print "Failed to send command to the sensor."
-            return False
+
+def create_table(db_name, table_name):
+    """
+    Create db file and also table as well with given parameters.
+
+    :param db_name: path & file name of db file
+    :param table_name: name of table
+    """
+    query = 'CREATE TABLE if NOT EXISTS ' + table_name + ' ( id INTEGER PRIMARY KEY AUTOINCREMENT, ' \
+                                                         'date_time DATETIME, ' \
+                                                         'val1 NUMERIC, ' \
+                                                         'val2 NUMERIC, ' \
+                                                         'val3 NUMERIC, ' \
+                                                         'val4 NUMERIC ' \
+                                                         ');'
+    return execute_query(db_name, query)
+
+
+def insert_data(db_name, table_name, val1, val2=0, val3=0, val4=0):
+    """
+    Insert data to db.
+    :param db_name: path & file name of db file
+    :param table_name: name of table
+    :param val1: 1st value
+    :param val2: 2nd value
+    :param val3: 3rd value
+    :param val4: 4th value
+    """
+    query = "INSERT INTO '" + table_name + \
+            "' (date_time, val1, val2, val3, val4) values(datetime('now','localtime'), " + \
+            str(val1) + ", " + str(val2) + ", " + str(val3) + ", " + str(val4) + ");"
+    execute_query(db_name, query)
+
+
+def get_last_value(db_name, table_name):
+    """
+    Get last record from the given table.
+    :return : List of data in order of Date & Time, val1, val2, val3, val4
+    """
+    query = "select * from '" + table_name + "' ORDER BY id DESC LIMIT 1;"  # get last one
+
+    q_result = request_query(db_name, query)
+
+    return q_result[0]      # result is type of list
+
+
+def get_max_value(db_name, table_name):
+    """
+    Get a record from the given table which has maximum sensor value.
+    :return : List of data in order of Date & Time, val1, val2, val3, val4
+    """
+    query = 'SELECT * FROM ' + table_name + ' WHERE val1=(SELECT max(val1) FROM ' + table_name + ');'
+
+    q_result = request_query(db_name, query)
+
+    return q_result[0]      # result is type of list
+
+
+def get_min_value(db_name, table_name):
+    """
+    Get a record from the given table which has minimum sensor value.
+    :return : List of data in order of Date & Time, val1, val2, val3, val4
+    """
+    query = 'SELECT * FROM ' + table_name + ' WHERE val1=(SELECT min(val1) FROM ' + table_name + ');'
+
+    q_result = request_query(db_name, query)
+
+    return q_result[0]      # result is type of list
+
+
+def get_table_name(db_name):
+    """
+    Get table name from the given database file.
+    """
+    query = 'SELECT name from sqlite_sequence'
+
+    q_result = request_query(db_name, query)
+
+    return q_result[0][0]   # result if list of lists
+
 
 if __name__ == '__main__':
 
-    print "Welcome to the Atlas Scientific Raspberry Pi example."
-    print "Before starting, please get correct serial number by running : python -m pylibftdi.examples.list_devices"
+    db_test = 'test1.sqlite'
+    table_test = 'tb_test'
 
-    while True:
-        addr = raw_input("Enter Serial Number of device(case sensitive): ")
+    create_table(db_test, table_test)
 
-        try:
-            dev = AtlasDevice(addr)
-            break
-        except pylibftdi.FtdiError as e:
-            print "Error, ", e
-            print "Please input correct serial number"
+    for i in range(10):
+        insert_data(db_test, table_test, random.uniform(1.0, 3.0))
 
-    print ""
-    print(">> Succeeded to open device")
-    print(">> Any commands entered are passed to the board via FTDI except:")
-    print(">> SN,xx changes the serial number the Raspberry Pi communicates with.")
-    print(">> Poll,xx.x command continuously polls the board every xx.x seconds")
-    print(" Pressing ctrl-c will stop the polling")
+    print "Last value:", get_last_value(db_test, table_test)
+    #
+    print "Max value: ", get_max_value(db_test, table_test)
+    print "Min value: ", get_min_value(db_test, table_test)
 
-    while True:
-        input_val = raw_input("Enter command: ")
+    print "Table name: ", get_table_name(db_test)
 
-        if input_val.upper().startswith("SN"):
-            addr = string.split(input_val, ',')[1]
-            dev = AtlasDevice(addr)
-            print("FTDI serial number set to " + addr)
-
-        # continuous polling command automatically polls the board
-        elif input_val.upper().startswith("POLL"):
-            delaytime = float(string.split(input_val, ',')[1])
-
-            print("Polling sensor every %0.2f seconds, press ctrl-c to stop polling" % delaytime)
-
-            try:
-                while True:
-                    dev.send_cmd('R')
-                    print "Response: ", dev.read_line()
-                    time.sleep(delaytime)
-            except KeyboardInterrupt:         # catches the ctrl-c command, which breaks the loop above
-                print("Continuous polling stopped")
-
-        # if not a special keyword, pass commands straight to board
-        else:
-            if len(input_val) == 0:
-                print "Please input valid command."
-            else:
-                dev.send_cmd(input_val)
-                print "Response: ", dev.read_line()
