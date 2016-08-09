@@ -81,4 +81,7 @@
     
 ## Test library
     
+    cd examples
+    python simple_test.py
+    
     
