@@ -13,7 +13,8 @@
 - Install dependencies
     
         sudo apt-get install sqlite
-
+        sudo pip install xlwt
+        
 - Create SYMLINK of the FTDI adaptors.
     
     The following will allow ordinary users (e.g. ‘pi’ on the RPi) to access to the FTDI device without needing root permissions:

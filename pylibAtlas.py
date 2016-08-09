@@ -1,6 +1,8 @@
 import random
 import sqlite3 as lite
 
+import xlwt
+
 
 def execute_query(db_name, query):
     """
@@ -39,7 +41,7 @@ def request_query(db_name, query):
 
     except lite.Error as e:
         print("Error %s:" % e.args[0])
-        return False
+        return None
 
 
 def create_table(db_name, table_name):
@@ -119,7 +121,60 @@ def get_table_name(db_name):
 
     q_result = request_query(db_name, query)
 
-    return q_result[0][0]   # result if list of lists
+    if q_result is not None:
+        return q_result[0][0]   # result if list of lists
+    else:
+        return None
+
+
+def export_xls(db_name):
+    """
+    Export sqlite db to excel file which has same name with db file.
+    :param db_name: db file name
+    """
+
+    table_name = get_table_name(db_name)
+
+    if table_name is None:
+        print "Error, there is no table"
+        return False
+
+    str_query = "SELECT * FROM " + table_name
+    data_list = request_query(db_name, str_query)
+
+    if data_list is not None:
+        try:
+            workbook = xlwt.Workbook()
+            worksheet = workbook.add_sheet(table_name)
+            col = 0
+
+            for rec_data in data_list:
+                col += 1
+                row = 0
+
+                for cell_data in rec_data:
+                    worksheet.write(col, row, cell_data)
+                    row += 1
+
+            worksheet.write(0, 0, "ID")
+            worksheet.write(0, 1, "Data & Time")
+            worksheet.write(0, 2, "Val1")
+            worksheet.write(0, 3, "Val2")
+            worksheet.write(0, 4, "Val3")
+            worksheet.write(0, 5, "Val4")
+
+            if db_name[-7:] == ".sqlite":
+                xls_name = db_name[:-7] + ".xls"
+            else:
+                xls_name = db_name + ".xls"
+
+            workbook.save(xls_name)
+            return True
+        except IOError as e:
+            print e
+            return False
+    else:
+        print "No data recorded."
 
 
 if __name__ == '__main__':
@@ -139,3 +194,4 @@ if __name__ == '__main__':
 
     print "Table name: ", get_table_name(db_test)
 
+    print "Exporting: ", export_xls('test1.sqlite')
