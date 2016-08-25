@@ -82,8 +82,8 @@
     
 Here is the basic sample code.
 
-    ```python
-    import pylibAtlas      # import pylibAtls library
+    ``` python
+    import pylibAtlas      # import pylibAtlas library
     
     db_test = 'test1.sqlite'
     table_test = 'tb_test'
