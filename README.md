@@ -78,10 +78,40 @@
     sudo python setup.py install
     
     
-    
 ## Test library
     
-    cd examples
-    python simple_test.py
+Here is the basic sample code.
+
+    ```python
+    import pylibAtlas      # import pylibAtls library
+    
+    db_test = 'test1.sqlite'
+    table_test = 'tb_test'
+    
+    # Create database file and also table with given parameter.
+    # Note that the table has columns named id, time stamp, val1, val2, val3, val4 to store sensor data. 
+    pylibAtlas.create_table(db_test, table_test)    
+    
+    # Once creating the database file and table, now let us read data from the sensor and save to db.
+    # Assume that sensor data has been saved to sensor_val variable.
+    pylibAtlas.insert_data(db_test, table_test, sensor_val)
+
+    # Now let us try to get last commited value
+    print "Last value:", pylibAtlas.get_last_value(db_test, table_test)
+    
+    # Maximum value through the whole db
+    print "Max value: ", pylibAtlas.get_max_value(db_test, table_test)
+    
+    # Minimum value through the whole db
+    print "Min value: ", pylibAtlas.get_min_value(db_test, table_test)
+    
+    # When we forget table name, we can use this function to get table name from the db file.
+    print "Table name: ", pylibAtlas.get_table_name(db_test)
+
+    # export to excel file which has same file name with db file.
+    # test1.xlsx file will be created in the same directory.
+    print "Exporting: ", pylibAtlas.export_xls('test1.sqlite')
+    
+    ```
     
     
