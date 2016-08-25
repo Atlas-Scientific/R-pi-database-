@@ -82,7 +82,7 @@
     
 Here is the basic sample code.
 
-    ``` python
+    ```Python
     import pylibAtlas      # import pylibAtlas library
     
     db_test = 'test1.sqlite'
