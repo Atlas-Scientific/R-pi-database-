@@ -82,7 +82,6 @@
     
 Here is the basic sample code.
 
-    ```Python
     import pylibAtlas      # import pylibAtlas library
     
     db_test = 'test1.sqlite'
@@ -112,6 +111,5 @@ Here is the basic sample code.
     # test1.xlsx file will be created in the same directory.
     print "Exporting: ", pylibAtlas.export_xls('test1.sqlite')
     
-    ```
     
     
